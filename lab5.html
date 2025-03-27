@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="stylesfor5.css" rel="stylesheet">
+    <title>Only Stands</title>
+
+</head>
+<body>
+    <div class="reg-container"> 
+        <h1> Venture into a world of exclusive Stands. </h1>
+            <form id="StandForm">
+                <div class="mb-4">
+                    <input type="text" class="form-control" placeholder="Former Name" id="Fname" required> 
+                </div>
+
+                <div class="mb-4">
+                    <input type="text" class="form-control" placeholder="Former Last Name" id="Lname" required> 
+                </div>
+
+                <div class="mb-4">
+                    <input type="text" class="form-control" placeholder="Stand Name" id="StandN" required>
+                </div>
+
+                <div class="mb-4">
+                    <input type="email" class="form-control" placeholder="Email" id="Email" required> 
+                </div>
+
+                <div class="mb-4">
+                    <input type="date" class="form-control" placeholder="DOB" id="DOB"required> 
+                </div>
+
+                <div class="mb-4">
+                    <input type="password" class="form-control" placeholder="Password (Need ! or ?)" id="Pass" required> 
+                </div>
+                
+                <button type="button" class = "stand-btn" onclick=Convert()> Test Your Will  </button>
+            </form> 
+        </div>  
+        
+    <div id="Result" class="mt-4" style="display:none;">
+        <h3 class = "awakened" > You are worthy</h3>
+        <div class="standinfo"></div>
+    </div>
+
+    <script>
+        function Convert() {
+
+            const FormerName = document.getElementById('Fname').value;
+            const FormerLastname = document.getElementById('Lname').value;
+            const Stand = document.getElementById('StandN').value;
+            const Email = document.getElementById('Email').value;
+            const Pass = document.getElementById('Pass').value;
+            const DOB = document.getElementById('DOB').value;
+    
+            const errors = [];
+            if (!FormerName) errors.push("Former name is required");
+            if (!FormerLastname) errors.push("Former Last name is required");
+            if (!Stand) errors.push("Stand name is required");
+            if (!Email) errors.push("Email is required");
+            if (!Pass) errors.push("Password is required");
+            if (!DOB) errors.push("Date of birth is required");
+            if (!/[!?]/.test(Pass)) errors.push("Password must contain ! or ?"); 
+    
+            if(errors.length > 0) {
+                alert("Stand Rejected!\n" + errors.join("\n"));
+                return;
+            }
+    
+            const standInfo = document.querySelector('.standinfo'); 
+            const hiddenpass = '*'.repeat(Pass.length);
+    
+            standInfo.innerHTML = 
+            `
+                <p>Former Identity: ${FormerName} ${FormerLastname}</p>
+                <p>Stand Name: ${Stand}</p>
+                <p>Email: ${Email}</p>
+                <p>Stand Code: ${hiddenpass}</p>
+                <p>Awakening Date: ${DOB}</p>
+                <p class="mt-3">This is... THE POWER OF MY STAND!</p>
+            `;
+            
+            document.getElementById('Result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
