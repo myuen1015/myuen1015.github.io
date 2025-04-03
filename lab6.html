@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat facts</title>
+</head>
+<body>
+    <h1>Cat facts</h1>
+    <button onclick="fetchData()" > CAT FACTS! :3 </button>
+    <img id = "CYAT" src="./assets/blankdoudou_6743 [photoutils.com] (2).jpg" style="width: 100%; height: auto;">
+    <ul id="cat_facts">
+        <li><span>Fact ID</span><span>Fact</span></li>
+    </ul>
+
+    <ol id= "Facts"></ol>
+
+    <script>
+        async function fetchData() {
+            try { 
+                const url = 'https://brianobruno.github.io/cats.json';
+                const options = {
+                    method: 'GET',
+                };
+                const response = await fetch(url, options);
+                const result = await response.text();
+                const myObj = JSON.parse(result); 
+
+                document.getElementById('CYAT').src = myObj.catPhoto;
+
+                const sortedFacts = myObj.facts.sort((a,b) => a.factId - b.factId); 
+                const factsList = document.getElementById('Facts');
+                factsList.innerHTML = ""; 
+
+                sortedFacts.forEach(fact => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span><strong>${fact.factId}</strong></span> - ${fact.text}`;
+                    factsList.appendChild(li);
+                });
+
+                
+            } catch (error) {
+                alert("Oops! Something went wrong ");
+                console.error("Error:", error);
+            }
+
+        }
+
+        async function postExample(someObject) {
+            const url = 'https://brianobruno.github.io/cats.json';
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(someObject)
+            };
+            const response = await fetch(url, options);
+            return response;
+        }
+    </script>
+
+
+</body>
+</html>
