@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TFT Match Viewer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="riotinfo.html">TFT Lookup</a>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+        </div>
+      </div>
+    </div>
+  </nav>
+  <h1>TFT Match Summary</h1>
+  <div id="matchList">Loading match data...</div>
+
+  <script>
+    const API_KEY = "RGAPI-8bc8fd2b-5622-40c3-a3ef-525586365d63";
+    const urlParams = new URLSearchParams(window.location.search); // pass the PUUID from index.html to this html folder 
+    const puuid = urlParams.get('puuid'); // get PUUID passed from index.html
+
+    // Base image URLs
+    const champImageBase = "https://raw.communitydragon.org/latest/game/assets/characters/";
+    const itemImageBase = "https://raw.communitydragon.org/latest/game/assets/maps/tft/icons/items/hexcore/";
+    const emblemImageBase = "https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/traits/spatula/set14/";
+
+    function getItemImageURL(itemName) { // gets items, e.g. https://.../tft_item_frozenheart.tft_set13.png the item name MUST be lowercase 
+      if (!itemName.startsWith("TFT_Item_")) return "";
+      const itemId = itemName.replace("TFT_Item_", "").toLowerCase();
+      return `${itemImageBase}tft_item_${itemId}.tft_set13.png`;
+    }
+
+    function getChampionImageURL(characterId) { // Gets Champion
+      const champId = characterId.toLowerCase().replace("tft14_", "");
+      return `${champImageBase}tft14_${champId}/hud/tft14_${champId}_square.tft_set14.png`;
+    }
+
+    function getEmblemImageURL(itemName) { // Gets emblem // emblems only need the emblems name 
+      const emblemName = itemName
+        .replace("TFT14_Item_", "") // takes the set 14 out of the emblem name 
+        .replace("EmblemItem", "") // takes emblemitem out 
+        .toLowerCase(); // makes it lowercase 
+      return `${emblemImageBase}tft14_emblem_${emblemName}.tft_set14.png`;
+    }
+
+    function ranking(n) { // prettier version 
+        if (n === 1) return "1st";
+        if (n === 2) return "2nd";
+        if (n === 3) return "3rd";
+        if (n === 4) return "4th";
+        if (n === 5) return "5th";
+        if (n === 6) return "6th";
+        if (n === 7) return "7th";
+        if (n === 8) return "8th";
+        return n; 
+      }
+
+    async function fetchMatchIDs() {
+      // Get match url by PUUID 
+      const listUrl = `https://americas.api.riotgames.com/tft/match/v1/matches/by-puuid/${puuid}/ids?start=0&count=10&api_key=${API_KEY}`;
+      try {
+        const res = await fetch(listUrl);
+        const matchIds = await res.json();
+        renderMatchList(matchIds); // call next function to display them
+      } catch (err) {
+        document.getElementById("matchList").textContent = "Cant load matches.";
+      }
+    }
+
+    async function renderMatchList(matchIds) {
+      const matches = document.getElementById("matchList"); // calls to the id matchlist 
+      matches.innerHTML = "";
+
+      for (const matchId of matchIds) { // loops through all match ids to fetch the match data from API 
+        const matchUrl = `https://americas.api.riotgames.com/tft/match/v1/matches/${matchId}?api_key=${API_KEY}`;
+        const res = await fetch(matchUrl);
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        const players = data.info.participants.sort((a, b) => a.placement - b.placement); // sort by placement like in lab 6 
+        // data is callig to the json file and info calling to all the match history in the json file
+
+        const Div = document.createElement("div"); // Match box // 
+        Div.style.border = "1px solid #ccc"; 
+        Div.style.margin = "10px";
+        Div.style.padding = "10px";
+
+        // loops through the placement and orders them 
+        const summaryText = players.map(p => `${ranking(p.placement)} - ${p.riotIdGameName}#${p.riotIdTagline}`).join(" | ");
+
+        const summaryDiv = document.createElement("div");
+        summaryDiv.textContent = summaryText;
+        Div.appendChild(summaryDiv);
+
+        // Toggle button for full match breakdown
+        const button = document.createElement("button");
+        button.textContent = "View Details";
+        Div.appendChild(button);
+
+        // this will contain the match details. starts hidden 
+        const details = document.createElement("div");
+        details.style.display = "none";
+        details.style.marginTop = "10px";
+        Div.appendChild(details); 
+
+        // Add detailed breakdown of each player
+        players.forEach(player => {
+          const playerDiv = document.createElement("div"); 
+          const header = document.createElement("h3");
+          header.textContent = `${ranking(player.placement)} - ${player.riotIdGameName}#${player.riotIdTagline}`;
+          playerDiv.appendChild(header); // player name/placement
+
+          player.units.forEach(unit => {
+            const unitDiv = document.createElement("div");
+
+            // Champion icon
+            const champImg = document.createElement("img");
+            champImg.src = getChampionImageURL(unit.character_id);
+            champImg.alt = unit.character_id; // alt attribute for <img>
+            champImg.width = 50;
+            champImg.height = 50;
+            champImg.style.verticalAlign = "middle";
+            champImg.style.marginRight = "8px";
+            unitDiv.appendChild(champImg);
+
+            // Champion name and tier 
+            const unitText = document.createElement("span");
+            unitText.textContent = `${unit.character_id} (${unit.tier}⭐)`;
+            unitDiv.appendChild(unitText);
+
+            // Show each item/emblem on the unit
+            unit.itemNames.forEach(item => {
+              const isEmblem = item.includes("EmblemItem");
+              const itemImg = document.createElement("img");
+
+              if (isEmblem) {
+                itemImg.src = getEmblemImageURL(item); // emblem image
+              } else {
+                itemImg.src = getItemImageURL(item); // normal item
+              }
+
+              itemImg.alt = item;
+              itemImg.width = 25;
+              itemImg.height = 25;
+              itemImg.style.verticalAlign = "middle";
+              itemImg.style.marginLeft = "5px";
+              unitDiv.appendChild(itemImg);
+            });
+
+            playerDiv.appendChild(unitDiv); // add unit to player div
+          });
+
+          details.appendChild(playerDiv); // add player to details section
+        });
+
+        // Toggle show/hide logic
+        button.onclick = () => {
+          const isVisible = details.style.display === "block"; // checks if its visable  --> 
+          details.style.display = isVisible ? "none" : "block"; // --> its is? Show it. Its not? dont show it 
+          button.textContent = isVisible ? "View Details" : "Hide Details"; 
+        };
+
+        matches.appendChild(Div); // add to the page 
+      }
+    }
+
+    fetchMatchIDs(); // Start it all
+  </script>
+</body>
+</html>

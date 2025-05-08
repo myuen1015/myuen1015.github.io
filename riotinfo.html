@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TFT Player Lookup</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body> 
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="riotinfo.html">TFT Lookup</a>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <a class="nav-link active" aria-current="page" href="linksthathelp.html">Helpful Links</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+
+  <h1>Enter Riot ID</h1>
+
+  <input type="text" id="summoner_name" placeholder="e.g. watering#cat" />
+  <button onclick="Search_summoner()">Search</button>
+
+  <div id="summonerlevel_data"></div>
+  <img id="summonerprofilepic_data" style="display:none;" width="65" height="65" />
+  <div id="tftInfo" style="display:none;"></div>
+
+  <div id="matchHistoryLink" style="margin-top:20px;"></div>
+
+  <script>
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    var API_KEY = "RGAPI-8bc8fd2b-5622-40c3-a3ef-525586365d63";
+    // only these functions are here because they are global variables that can be accessed by any script
+    var summoner_name = "";
+    var summoner_tagline = "";
+    var fullSummonerNameUrl = "";
+
+    function Search_summoner() {
+        // Get the input value and split by '#'
+        var input = document.getElementById("summoner_name").value;
+        var name_tag_array = input.split('#');
+        summoner_name = name_tag_array[0];
+        summoner_tagline = name_tag_array[1];
+
+        var americas_url = "https://americas.api.riotgames.com";
+        var summonerNameUrl = "/riot/account/v1/accounts/by-riot-id/" + summoner_name + "/" + summoner_tagline; // add together the entire link name
+        fullSummonerNameUrl = americas_url + summonerNameUrl + "?api_key=" + API_KEY;
+
+        data(); // fetch puuid → then summoner info & TFT
+    }
+
+    async function data() {
+        try {
+            const response = await fetch(fullSummonerNameUrl);
+            if (!response.ok) throw new Error("summoner data failed");
+
+            const json = await response.json();
+            console.log("Riot ID Response JSON:", json); // make sure it works
+            const puuid = json.puuid;
+
+            getSummonerByPUUID(puuid);
+            fetchTFTData(puuid);
+            createMatchHistoryLink(puuid);
+        } catch (error) {
+            console.error("Cant get Riot ID data:", error);
+        }
+    }
+
+    async function getSummonerByPUUID(puuid) {
+        try {
+            const url = `https://na1.api.riotgames.com/tft/summoner/v1/summoners/by-puuid/${puuid}?api_key=${API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("summoner puuid failed");
+
+            const summonerData = await response.json();
+            console.log("Summoner Info JSON:", summonerData); // make sure it works
+
+            // Display summoner level
+            const level = summonerData.summonerLevel;
+            const levelDiv = document.getElementById("summonerlevel_data");
+            if (levelDiv) {
+                levelDiv.innerHTML = `${summoner_name} is Level: ${level}`;
+            }
+
+            // Display profile picture
+            const iconId = summonerData.profileIconId;
+            const profilePicElement = document.getElementById("summonerprofilepic_data");
+            if (profilePicElement) {
+                const iconUrl = `https://ddragon.leagueoflegends.com/cdn/15.9.1/img/profileicon/${iconId}.png`;
+                profilePicElement.src = iconUrl;
+                profilePicElement.style.display = "block";
+            }
+
+        } catch (error) {
+            console.error("Cant get  summoner by PUUID:", error);
+        }
+    }
+
+    async function fetchTFTData(puuid) {
+        const tftInfoElement = document.getElementById("tftInfo");
+        const url = `https://na1.api.riotgames.com/tft/league/v1/by-puuid/${puuid}?api_key=${API_KEY}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("summoner tft failed");
+
+            const data = await res.json();
+            const stats = data[0]; // Assumes only one entry
+            console.log("First Entry of Ranked Data (stats):", stats);
+
+            if (tftInfoElement) {
+                tftInfoElement.innerHTML = `
+                    <p><strong>Rank:</strong> ${stats.tier} ${stats.rank} - ${stats.leaguePoints} LP</p>
+                    <p><strong>Wins:</strong> ${stats.wins}</p>
+                    <p><strong>Losses:</strong> ${stats.losses}</p>
+                    <p><strong>Inactive:</strong> ${stats.inactive}</p>
+                    <p><strong>Hot Streak:</strong> ${stats.hotStreak}</p>
+                `;
+                tftInfoElement.style.display = "block";
+            }
+
+        } catch (err) {
+            console.error("Cant get  TFT ranked data:", err);
+        }
+    }
+
+    function createMatchHistoryLink(puuid) {
+        // create a link to the 2nd HTML file (match history)
+        const linkDiv = document.getElementById("matchHistoryLink");
+        const a = document.createElement("a");
+        a.href = `match-history.html?puuid=${puuid}`;
+        a.innerText = "View Match History";
+        a.style.fontSize = "18px";
+        linkDiv.innerHTML = "";
+        linkDiv.appendChild(a);
+    }
+  </script>
+</body>
+</html>

@@ -10,16 +10,16 @@ body {
 
 .navbar {
     border-bottom: 3px solid #2d2d2d;
-    background-color: #fff5e6 !important;
+    background-color: #fff5e6 !important; /* Must need !important or else it wont affect the nav bar */ 
 }
 
 .nav-link {
-    color: #ff6b35 !important;
+    color: #ff6b35 !important; /* Must need !important or else it wont affect the nav bar */ 
     font-weight: 500;
 }  
 
 .nav-link:hover {
-    text-decoration: underline;
+    text-decoration: underline; 
 }
 
 h1, h2 {
